@@ -75,16 +75,33 @@ final class CampusLensUITests: XCTestCase {
         XCTAssertTrue(accessibility.isHittable); accessibility.tap()
         let display = settings.staticTexts["Display & Text Size"].firstMatch
         XCTAssertTrue(display.waitForExistence(timeout:5)); display.tap()
-        let transparency = settings.switches["Reduce Transparency"].firstMatch
-        scrollTo(transparency,app:settings)
-        XCTAssertTrue(transparency.isHittable)
-        if transparency.value as? String == "0" { transparency.tap() }
+        enableSystemSwitch("Reduce Transparency",in:settings)
         settings.navigationBars.buttons["Accessibility"].firstMatch.tap()
         let motion = settings.staticTexts["Motion"].firstMatch
         XCTAssertTrue(motion.waitForExistence(timeout:5)); motion.tap()
-        let reduceMotion = settings.switches["Reduce Motion"].firstMatch
-        XCTAssertTrue(reduceMotion.waitForExistence(timeout:5))
-        if reduceMotion.value as? String == "0" { reduceMotion.tap() }
+        enableSystemSwitch("Reduce Motion",in:settings)
         settings.terminate()
+    }
+    func enableSystemSwitch(_ name: String,in settings: XCUIApplication) {
+        let toggle = settings.switches[name].firstMatch
+        let row = settings.cells.containing(.switch,identifier:name).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout:10))
+        // Settings can expose a zero-frame AX switch during a transition. Use
+        // its enclosing row's visible frame instead of the switch hit point.
+        for _ in 0..<8 {
+            let frame = row.frame
+            if frame.width > 100 && frame.height > 20 && settings.frame.contains(CGPoint(x:frame.midX,y:frame.midY)) { break }
+            settings.swipeUp()
+        }
+        let visible = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in
+            let frame = row.frame
+            return row.exists && frame.width > 100 && frame.height > 20 && settings.frame.contains(CGPoint(x:frame.midX,y:frame.midY))
+        },object:row)
+        XCTAssertEqual(XCTWaiter.wait(for:[visible],timeout:10),.completed)
+        if toggle.value as? String == "0" {
+            row.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.5)).tap()
+        }
+        let enabled = XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == '1'"),object:toggle)
+        XCTAssertEqual(XCTWaiter.wait(for:[enabled],timeout:5),.completed)
     }
 }
