@@ -11,6 +11,11 @@ git diff --exit-code -- CampusLens.xcodeproj
 swift test 2>&1 | tee artifacts/core-tests.log
 udid=$(python3 scripts/select_simulator.py "$major")
 printf '%s\n' "$udid" > artifacts/simulator.txt
+# Type-check and compile before the cold simulator boot. A source error should
+# be reported immediately rather than after several minutes of OS migration.
+xcodebuild build-for-testing -project CampusLens.xcodeproj -scheme CampusLens -configuration Debug \
+  -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/DerivedData \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee artifacts/simulator-build.log
 xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b
 xcodebuild test -project CampusLens.xcodeproj -scheme CampusLens -configuration Debug \

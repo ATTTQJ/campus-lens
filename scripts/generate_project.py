@@ -91,7 +91,8 @@ main_group = add("main-group","PBXGroup",f"children = {refs(groups+[products_gro
 configs = []
 for config in ["Debug","Release"]:
     values = {"CLANG_ENABLE_MODULES":"YES","SDKROOT":"iphoneos","ENABLE_TESTABILITY":"YES" if config == "Debug" else "NO",
-              "DEBUG_INFORMATION_FORMAT":"dwarf" if config == "Debug" else "dwarf-with-dsym","SWIFT_VERSION":"6.0"}
+              "DEBUG_INFORMATION_FORMAT":"dwarf" if config == "Debug" else "dwarf-with-dsym","SWIFT_VERSION":"6.0",
+              "ONLY_ACTIVE_ARCH":"YES" if config == "Debug" else "NO"}
     configs.append(add("project-config-"+config,"XCBuildConfiguration",f"buildSettings = {settings(values)}; name = {config};"))
 config_list = add("project-configs","XCConfigurationList",f"buildConfigurations = {refs(configs)} defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;")
 add("project","PBXProject",f"attributes = {{ BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 2600; }}; buildConfigurationList = {config_list}; compatibilityVersion = \"Xcode 15.0\"; developmentRegion = zh-Hans; hasScannedForEncodings = 0; knownRegions = (en, Base, \"zh-Hans\"); mainGroup = {main_group}; packageReferences = {refs([package])} productRefGroup = {products_group}; projectDirPath = \"\"; projectRoot = \"\"; targets = {refs(targets)}")

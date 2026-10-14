@@ -14,7 +14,7 @@ $repoName = "$gitHubLogin/campus-lens"
 gh api "repos/$repoName" --silent 2>$null
 if ($LASTEXITCODE -eq 0) { throw "Repository $repoName already exists; inspect it before pushing." }
 git status --short
-git add .gitignore App AppTests CampusLens.xcodeproj Sources Tests UITests scripts .github docs Package.swift README.md LICENSE
+git add .gitignore .gitattributes App AppTests CampusLens.xcodeproj Sources Tests UITests scripts .github docs Package.swift README.md LICENSE
 if ($LASTEXITCODE -ne 0) { throw 'git add failed' }
 git -c user.name='CampusLens Contributor' -c user.email="$gitHubLogin@users.noreply.github.com" commit -m 'Implement CampusLens RAW capture, offline solver, calibration and cloud builds'
 if ($LASTEXITCODE -ne 0) { throw 'git commit failed' }

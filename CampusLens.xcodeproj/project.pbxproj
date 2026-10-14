@@ -21,8 +21,8 @@
 4FE4D2874364DD4FCC1DC7FC = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/CampusLensApp.swift"; sourceTree = SOURCE_ROOT; };
 5241A5E0582D16ADC787F76E = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 5C348544957B61C79E9359A8 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (B005BE9142F9F5E679DEB184); runOnlyForDeploymentPostprocessing = 0; };
-664642617E4A7D68CDAE216B = { isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = "YES"; SDKROOT = "iphoneos"; ENABLE_TESTABILITY = "NO"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; SWIFT_VERSION = "6.0";}; name = Release; };
-685EC5AD8CAF20CBA30EAD2F = { isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = "YES"; SDKROOT = "iphoneos"; ENABLE_TESTABILITY = "YES"; DEBUG_INFORMATION_FORMAT = "dwarf"; SWIFT_VERSION = "6.0";}; name = Debug; };
+664642617E4A7D68CDAE216B = { isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = "YES"; SDKROOT = "iphoneos"; ENABLE_TESTABILITY = "NO"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; SWIFT_VERSION = "6.0"; ONLY_ACTIVE_ARCH = "NO";}; name = Release; };
+685EC5AD8CAF20CBA30EAD2F = { isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = "YES"; SDKROOT = "iphoneos"; ENABLE_TESTABILITY = "YES"; DEBUG_INFORMATION_FORMAT = "dwarf"; SWIFT_VERSION = "6.0"; ONLY_ACTIVE_ARCH = "YES";}; name = Debug; };
 6D4D7325874C410A329DD335 = { isa = PBXTargetDependency; target = 6E6375FF12C4492541D91176; targetProxy = 9771B23C9356474640C743E7; };
 6E6375FF12C4492541D91176 = { isa = PBXNativeTarget; buildConfigurationList = C4AB72EB9C7431F428DE1793; buildPhases = (FCA189F025841A15DF984E80, A6FCEBCD4A49A7F0A57D63C3, F0EA4893F6B616AF5B177A0A); buildRules = (); dependencies = (); name = "CampusLens"; productName = "CampusLens"; productReference = F642D3914E7F30555FB64C1B; productType = "com.apple.product-type.application"; packageProductDependencies = (F5AE27228AC34400DE4A3768); };
 701619A5CADDBE5EBCAEC463 = { isa = PBXBuildFile; fileRef = 899931C35B70EDB988FCDB20; };
