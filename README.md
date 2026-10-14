@@ -120,7 +120,7 @@ python scripts/check_source.py
 
 可选语法检查需 `pip install tree-sitter tree-sitter-swift` 后执行 `python scripts/parse_swift.py`，它不检查 Swift 类型、系统 API 或并发隔离，不替代 Xcode。添加 Swift 文件后运行工程生成脚本并提交生成的工程和 Scheme。重新生成图标需要 Pillow，正常构建不需要。
 
-模拟器始终标注测试数据，不伪造 RAW；故障注入仅在 Debug 生效。辅助显示 UI 测试使用 SwiftUI 环境覆盖大字体、降低透明度、减少动态和深色；VoiceOver 的实际朗读顺序和系统级显示设置仍需人工验证。
+模拟器始终标注测试数据，不伪造 RAW；故障注入仅在 Debug 生效。辅助显示 UI 测试通过模拟器系统设置开启降低透明度和减少动态，Debug 修饰器仅提供大字体和深色。VoiceOver 的实际朗读顺序和手机上的显示设置仍需人工验证。
 
 ## 官方依据
 

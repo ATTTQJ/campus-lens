@@ -15,8 +15,6 @@ struct TestAccessibilitySettings: ViewModifier {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--accessibility-test") {
             content.dynamicTypeSize(.accessibility5)
-                .environment(\.accessibilityReduceTransparency,true)
-                .environment(\.accessibilityReduceMotion,true)
                 .preferredColorScheme(.dark)
         } else { content }
         #else

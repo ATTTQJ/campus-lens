@@ -35,6 +35,7 @@ final class CampusLensUITests: XCTestCase {
         assertMessage(failure.staticTexts["capture-message"],contains:"拍摄失败")
     }
     func testBackgroundAndLargeText() {
+        enableSystemAccessibilitySettings()
         let app = makeApp(accessibility:true)
         scrollTo(app.buttons["prepare"],app:app)
         app.buttons["prepare"].tap()
@@ -62,5 +63,28 @@ final class CampusLensUITests: XCTestCase {
     func assertMessage(_ element: XCUIElement,contains text: String) {
         let expectation = XCTNSPredicateExpectation(predicate:NSPredicate(format:"label CONTAINS %@",text),object:element)
         XCTAssertEqual(XCTWaiter.wait(for:[expectation],timeout:5),.completed)
+    }
+    func enableSystemAccessibilitySettings() {
+        // The environment accessors are read-only. Exercise actual simulator
+        // Settings for motion/transparency; only font size and dark mode are
+        // supplied by the Debug test modifier. The CI simulator is disposable.
+        let settings = XCUIApplication(bundleIdentifier:"com.apple.Preferences")
+        settings.launch()
+        let accessibility = settings.staticTexts["Accessibility"].firstMatch
+        scrollTo(accessibility,app:settings)
+        XCTAssertTrue(accessibility.isHittable); accessibility.tap()
+        let display = settings.staticTexts["Display & Text Size"].firstMatch
+        XCTAssertTrue(display.waitForExistence(timeout:5)); display.tap()
+        let transparency = settings.switches["Reduce Transparency"].firstMatch
+        scrollTo(transparency,app:settings)
+        XCTAssertTrue(transparency.isHittable)
+        if transparency.value as? String == "0" { transparency.tap() }
+        settings.navigationBars.buttons["Accessibility"].firstMatch.tap()
+        let motion = settings.staticTexts["Motion"].firstMatch
+        XCTAssertTrue(motion.waitForExistence(timeout:5)); motion.tap()
+        let reduceMotion = settings.switches["Reduce Motion"].firstMatch
+        XCTAssertTrue(reduceMotion.waitForExistence(timeout:5))
+        if reduceMotion.value as? String == "0" { reduceMotion.tap() }
+        settings.terminate()
     }
 }

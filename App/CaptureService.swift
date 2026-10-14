@@ -93,7 +93,7 @@ final class CaptureService: NSObject, @unchecked Sendable, AVCapturePhotoCapture
     func capture(id: UUID) async throws -> CaptureOutput {
         try await withCheckedThrowingContinuation { continuation in
             queue.async { [self] in
-                guard pending == nil, session.isRunning, let device, let rawFormat else {
+                guard pending == nil, session.isRunning, let device, rawFormat != nil else {
                     continuation.resume(throwing:SolverError.invalid("相机未准备好或正在拍摄")); return
                 }
                 pending = continuation; captureID = id; delegateError = nil

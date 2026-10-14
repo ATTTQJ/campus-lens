@@ -13,5 +13,4 @@
 <key>NSPhotoLibraryAddUsageDescription</key><string>仅在你主动保存预览照片时写入照片图库。</string>
 <key>UILaunchScreen</key><dict/>
 <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
-<key>UIRequiresFullScreen</key><true/>
 </dict></plist>
