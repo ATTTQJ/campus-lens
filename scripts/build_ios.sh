@@ -15,13 +15,15 @@ printf '%s\n' "$udid" > artifacts/simulator.txt
 # be reported immediately rather than after several minutes of OS migration.
 xcodebuild build-for-testing -project CampusLens.xcodeproj -scheme CampusLens -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/DerivedData \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee artifacts/simulator-build.log
+  CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
+  CODE_SIGN_ENTITLEMENTS=App/Simulator.entitlements 2>&1 | tee artifacts/simulator-build.log
 xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b
 xcodebuild test -project CampusLens.xcodeproj -scheme CampusLens -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/DerivedData \
   -resultBundlePath artifacts/iOS-tests.xcresult -parallel-testing-enabled NO \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee artifacts/simulator-tests.log
+  CODE_SIGNING_ALLOWED=YES CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
+  CODE_SIGN_ENTITLEMENTS=App/Simulator.entitlements 2>&1 | tee artifacts/simulator-tests.log
 if [[ "$mode" == "archive" ]]; then
   xcodebuild archive -project CampusLens.xcodeproj -scheme CampusLens -configuration Release \
     -destination 'generic/platform=iOS' -archivePath build/CampusLens.xcarchive \

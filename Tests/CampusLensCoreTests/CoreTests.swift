@@ -111,4 +111,12 @@ final class CoreTests: XCTestCase {
             XCTAssertThrowsError(try AISuggestion.validated(json:Data(json.utf8),subjects:subjects))
         }
     }
+    func testJPEGMetadataSegmentsAreRemovedWithoutChangingScan() throws {
+        let header: [UInt8] = [0xff,0xd8,0xff,0xe1,0,8,69,120,105,102,0,0,
+                               0xff,0xfe,0,4,65,66,0xff,0xdb,0,4,1,2]
+        let scan: [UInt8] = [0xff,0xda,0,2,10,0xff,0,20,0xff,0xd9]
+        let cleaned = try JPEGMetadata.stripped(Data(header+scan))
+        XCTAssertEqual([UInt8](cleaned),[0xff,0xd8,0xff,0xdb,0,4,1,2]+scan)
+        XCTAssertThrowsError(try JPEGMetadata.stripped(Data([0xff,0xd8,0xff,0xe1,0,20])))
+    }
 }

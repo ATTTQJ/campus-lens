@@ -60,7 +60,7 @@ RAW 高光检查读取 DNG 的黑电平重复模式和白电平，对实际 Baye
 
 ## 隐私、保存和联网
 
-默认关闭联网。设置完整 HTTPS Chat Completions URL（包含 `/chat/completions` 路径）、模型和 API Key 后启用。使用 [OpenAI 兼容视觉格式](https://developers.openai.com/api/docs/guides/images-vision)，只发送重新编码、去除 EXIF/GPS、最长边 1280px 的 JPEG。用户自行决定照片是否可以发送至所配置服务。
+默认关闭联网。设置完整 HTTPS Chat Completions URL（包含 `/chat/completions` 路径）、模型和 API Key 后启用。使用 [OpenAI 兼容视觉格式](https://developers.openai.com/api/docs/guides/images-vision)，只发送转换为 sRGB、重新编码、清除 APP／COM 元数据段、最长边 1280px 的 JPEG。用户自行决定照片是否可以发送至所配置服务。
 
 请求／资源超时 15 秒，不接受 HTTP 或重定向；无日志输出密钥、图片或接口响应。密钥仅存在本机 `WhenUnlockedThisDeviceOnly` Keychain。JSON 必须且只能包含允许的 `scene`、本机候选 `subjectID`、不超过 1200 字的 `explanation`，额外曝光字段会被拒绝。AI 不参与曝光数值求解。先显示离线结果，联网返回后显示“有补充建议”；用户采纳才变更场景／说明，建议变更主体时要求重拍。失败保留离线参数，支持主动重试。
 
@@ -89,6 +89,8 @@ Windows 不能运行 Xcode。源码在 Windows 编写，iOS 编译、模拟器�
 PR 只测试、不生成设备包。主分支和手动触发生成包；Artifacts 保留七天。推送 `v*` 标签时主构建成功后把 IPA 和版本信息附加到 GitHub Release。正式声明支持 iOS 27 前，必须确认**同一提交**的两套系统测试都通过，并完成对应真机验收。
 
 IPA 打包只接受 `iPhoneOS` archive，检查主可执行文件及 POSIX 执行权限，拒绝意外签名材料；按 `Payload/CampusLens.app` 保留文件权限和符号链接。关闭云端签名，不需 Apple 证书。源码公开且使用标准 GitHub 托管 runner 的运行时间免费，产物存储受账号额度影响，详见 [GitHub 计费说明](https://docs.github.com/en/billing/concepts/product-billing/github-actions)。本项目没有启用付费 larger runner。
+
+模拟器测试使用无需 Apple 证书的本地临时 ad-hoc 签名和独立测试 Keychain 权限，用于验证真实 Keychain 调用。`App/Simulator.entitlements` 仅通过模拟器命令行参数使用，不用于设备 archive；交付的设备 IPA 仍关闭签名。自行签名侧载后，由签名工具提供你的应用标识和默认 Keychain 权限。
 
 ## Windows 使用 Sideloadly 安装与续签
 

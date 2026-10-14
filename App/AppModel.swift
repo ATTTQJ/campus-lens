@@ -47,7 +47,10 @@ final class AppModel {
     private var autoAIRequestedCaptureID: UUID?
     init(aiClient: AIClient = AIClient()) {
         self.aiClient = aiClient
-        do { calibrations = try CalibrationStore.load(); try RawFileStore.cleanupOnLaunch() }
+        do {
+            try FileManager.default.createDirectory(at:URL.applicationSupportDirectory,withIntermediateDirectories:true)
+            calibrations = try CalibrationStore.load(); try RawFileStore.cleanupOnLaunch()
+        }
         catch { self.error = "本机记录读取／清理失败："+error.localizedDescription }
         captureService.onEvent = { [weak self] event in
             Task { @MainActor [weak self] in

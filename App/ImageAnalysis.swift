@@ -14,11 +14,19 @@ enum ImageAnalysis {
                 kCGImageSourceCreateThumbnailWithTransform:true,
                 kCGImageSourceThumbnailMaxPixelSize:maxEdge
               ] as CFDictionary) else { throw SolverError.invalid("无法解码拍摄预览") }
+        guard let colorSpace = CGColorSpace(name:CGColorSpace.sRGB),
+              let bitmap = CGContext(data:nil,width:image.width,height:image.height,bitsPerComponent:8,bytesPerRow:0,
+                                     space:colorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            throw SolverError.invalid("无法创建 sRGB 预览")
+        }
+        bitmap.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
+        guard let rgb = bitmap.makeImage() else { throw SolverError.invalid("无法转换预览色彩") }
         let encoded = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(encoded,UTType.jpeg.identifier as CFString,1,nil) else { throw SolverError.invalid("无法创建 JPEG") }
-        CGImageDestinationAddImage(destination,image,[kCGImageDestinationLossyCompressionQuality:0.85] as CFDictionary)
+        CGImageDestinationAddImage(destination,rgb,[kCGImageDestinationLossyCompressionQuality:0.85,
+                                                  kCGImagePropertyJFIFDictionary:[kCGImagePropertyJFIFIsProgressive:false]] as CFDictionary)
         guard CGImageDestinationFinalize(destination) else { throw SolverError.invalid("无法编码预览") }
-        return encoded as Data
+        return try JPEGMetadata.stripped(encoded as Data)
     }
     static func subjects(jpeg: Data, manualRegion: UnitRect?) throws -> [SubjectCandidate] {
         let faces = VNDetectFaceRectanglesRequest()
