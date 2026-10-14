@@ -12,6 +12,9 @@ public enum NewsScene: String, Codable, CaseIterable, Sendable, Identifiable {
     public var title: String {
         switch self { case .classroom: "会议课堂"; case .award: "颁奖抓拍"; case .group: "多排合影" }
     }
+    public var defaultMotion: Motion {
+        switch self { case .classroom: .speaking; case .award: .walking; case .group: .still }
+    }
 }
 public enum Motion: String, Codable, CaseIterable, Sendable, Identifiable {
     case still, speaking, walking

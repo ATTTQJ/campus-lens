@@ -20,6 +20,12 @@ final class HistoryRecord {
         result.sample.previewJPEG = thumbnail
         return result
     }
+    func update(result: SavedResult) throws {
+        guard result.sample.id == id else { throw SolverError.invalid("历史记录 ID 不匹配") }
+        var compact = result; compact.sample.previewJPEG = Data()
+        let encoded = try JSONEncoder().encode(compact)
+        timestamp = result.sample.timestamp; thumbnail = result.sample.previewJPEG; payload = encoded
+    }
 }
 struct CameraAdjustment: Codable, Sendable, Equatable {
     var compensation: Double = 0

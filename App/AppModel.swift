@@ -181,8 +181,8 @@ final class AppModel {
     func persist(context: ModelContext) throws {
         guard let result = savedResult() else { return }
         let all = try context.fetch(FetchDescriptor<HistoryRecord>(sortBy:[SortDescriptor(\.timestamp,order:.reverse)]))
-        if let existing = all.first(where: { $0.id == result.sample.id }) { context.delete(existing) }
-        context.insert(try HistoryRecord(result:result))
+        if let existing = all.first(where: { $0.id == result.sample.id }) { try existing.update(result:result) }
+        else { context.insert(try HistoryRecord(result:result)) }
         let other = all.filter { $0.id != result.sample.id }
         for record in other.dropFirst(99) { context.delete(record) }
         try context.save()

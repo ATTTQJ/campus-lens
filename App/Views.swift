@@ -60,11 +60,7 @@ struct CaptureView: View {
                     Spacer()
                     ScrollView {
                       VStack(spacing:12) {
-                        Picker("新闻场景",selection:$model.intent.scene) {
-                            ForEach(NewsScene.allCases) { Text($0.title).tag($0) }
-                        }.pickerStyle(.segmented).onChange(of:model.intent.scene) { _,scene in
-                            model.intent.motion = scene == .award ? .walking : scene == .group ? .still : .speaking
-                        }
+                        SceneSelector(intent:$model.intent,label:"新闻场景").pickerStyle(.segmented)
                         HStack {
                             focalMenu(.nikon)
                             focalMenu(.canon)
@@ -104,12 +100,28 @@ struct CaptureView: View {
         }.buttonStyle(.glass).font(.caption)
     }
 }
+struct SceneSelector: View {
+    @Binding var intent: SceneIntent
+    var label = "场景"
+    private var selection: Binding<NewsScene> {
+        Binding<NewsScene>(get:{ intent.scene },set:{ scene in
+            intent.scene = scene
+            intent.motion = scene.defaultMotion
+        })
+    }
+    var body: some View {
+        Picker(label,selection:selection) {
+            Text("会议课堂").tag(NewsScene.classroom)
+            Text("颁奖抓拍").tag(NewsScene.award)
+            Text("多排合影").tag(NewsScene.group)
+        }
+    }
+}
 struct ConditionsEditor: View {
     @Binding var intent: SceneIntent
     var body: some View {
         Section("现场确认") {
-            Picker("场景",selection:$intent.scene) { ForEach(NewsScene.allCases) { Text($0.title).tag($0) } }
-                .onChange(of:intent.scene) { _,scene in intent.motion = scene == .award ? .walking : scene == .group ? .still : .speaking }
+            SceneSelector(intent:$intent)
             Picker("人物运动",selection:$intent.motion) { ForEach(Motion.allCases) { Text($0.title).tag($0) } }
             Toggle("手持拍摄",isOn:$intent.handheld)
             Toggle("将使用闪光灯（推荐不含闪光曝光）",isOn:$intent.flash)

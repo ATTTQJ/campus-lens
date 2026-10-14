@@ -78,6 +78,20 @@ final class ImageAndLifecycleTests: XCTestCase {
         model.changeSubject(1)
         XCTAssertTrue(model.needsReshoot); XCTAssertTrue(model.recommendations.isEmpty)
     }
+    func testPersistUpdatesSameCaptureWithoutDuplicate() throws {
+        let model = AppModel()
+        let container = try ModelContainer(for:HistoryRecord.self,configurations:ModelConfiguration(isStoredInMemoryOnly:true))
+        model.sample = Fixture.sample(id:UUID())
+        model.recommendations = [try ExposureSolver.solve(sample:XCTUnwrap(model.sample),intent:model.intent,camera:.nikon)]
+        try model.persist(context:container.mainContext)
+        model.adjustments["nikon"] = CameraAdjustment(compensation:1)
+        model.recommendations = [try ExposureSolver.solve(sample:XCTUnwrap(model.sample),intent:model.intent,camera:.nikon,compensation:1)]
+        try model.persist(context:container.mainContext)
+        let records = try container.mainContext.fetch(FetchDescriptor<HistoryRecord>())
+        XCTAssertEqual(records.count,1)
+        XCTAssertEqual(try records[0].decoded().recommendations[0].compensationEV,1)
+        XCTAssertEqual(try records[0].decoded().adjustments["nikon"]?.compensation,1)
+    }
     func testTemporaryRAWDeletion() throws {
         let url = try RawFileStore.write(Data([1,2,3]),id:UUID())
         XCTAssertTrue(FileManager.default.fileExists(atPath:url.path))
