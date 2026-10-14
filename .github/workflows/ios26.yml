@@ -1,0 +1,50 @@
+name: iOS 26 main build
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios26-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26.6 explicitly
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.6.app/Contents/Developer
+          xcodebuild -version | grep -Fx 'Xcode 26.6'
+      - name: Test and build unsigned device package
+        env:
+          BUILD_MODE: ${{ github.event_name == 'pull_request' && 'test' || 'archive' }}
+        run: bash scripts/build_ios.sh 26 "$BUILD_MODE"
+      - name: Upload IPA, test report, logs and versions (7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CampusLens-iOS26-${{ github.run_number }}
+          path: artifacts/
+          retention-days: 7
+          if-no-files-found: warn
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: CampusLens-iOS26-${{ github.run_number }}
+          path: artifacts
+      - name: Publish unsigned IPA to version Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "CampusLens $GITHUB_REF_NAME · unsigned" --notes '未签名设备 IPA，需自行签名。自动测试状态见 Actions；真机 RAW、校准和两台相机实测状态见 docs/VALIDATION.md。此 Release 不自动声明 iOS 27 支持。' artifacts/CampusLens-unsigned.ipa artifacts/SHA256SUMS.txt artifacts/version.json
