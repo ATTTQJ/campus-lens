@@ -65,7 +65,7 @@ for name, source_paths, product_type in [
     for config in ["Debug","Release"]:
         values = {"PRODUCT_NAME":"$(TARGET_NAME)","PRODUCT_BUNDLE_IDENTIFIER":"org.campuslens."+name,
                   "SWIFT_VERSION":"6.0","IPHONEOS_DEPLOYMENT_TARGET":"26.0","TARGETED_DEVICE_FAMILY":"1",
-                  "CODE_SIGN_STYLE":"Automatic","CURRENT_PROJECT_VERSION":"1","MARKETING_VERSION":"0.1.0",
+                  "CODE_SIGN_STYLE":"Automatic","CURRENT_PROJECT_VERSION":"1","MARKETING_VERSION":"0.2.0",
                   "SWIFT_STRICT_CONCURRENCY":"complete","GENERATE_INFOPLIST_FILE":"YES"}
         if name == "CampusLens":
             values.update({"GENERATE_INFOPLIST_FILE":"NO","INFOPLIST_FILE":"App/Info.plist","ASSETCATALOG_COMPILER_APPICON_NAME":"AppIcon"})

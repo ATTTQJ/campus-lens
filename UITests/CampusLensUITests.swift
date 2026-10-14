@@ -57,6 +57,48 @@ final class CampusLensUITests: XCTestCase {
         assertMessage(app.staticTexts["ai-status"],contains:"离线结果保留")
         XCTAssertTrue(app.otherElements["parameters-canon"].exists)
     }
+    func testAdjustmentPreviewUndoRestoreAndHiddenSubjectFrames() {
+        let app = makeApp()
+        app.buttons["prepare"].tap()
+        XCTAssertTrue(app.buttons["shoot"].waitForExistence(timeout:5))
+        let finder = app.otherElements["capture-viewfinder"]
+        if finder.exists {
+            XCTAssertEqual(finder.frame.width/finder.frame.height,0.75,accuracy:0.01)
+            XCTAssertGreaterThanOrEqual(app.buttons["shoot"].frame.minY,finder.frame.maxY)
+        }
+        keepScreenshot(app,"Capture-glass")
+        app.buttons["shoot"].tap()
+        XCTAssertTrue(app.buttons["confirm"].waitForExistence(timeout:10))
+        scrollTo(app.buttons["confirm"],app:app); app.buttons["confirm"].tap()
+        XCTAssertTrue(app.otherElements["parameters-nikon"].waitForExistence(timeout:10))
+        XCTAssertFalse(app.otherElements["subject-regions"].exists)
+        for _ in 0..<5 { if app.buttons["adjust-nikon"].isHittable { break }; app.swipeDown() }
+        scrollTo(app.buttons["adjust-nikon"],app:app); keepScreenshot(app,"Results-glass")
+        app.buttons["adjust-nikon"].tap()
+        XCTAssertTrue(app.buttons["feedback-faster"].waitForExistence(timeout:5))
+        app.buttons["feedback-faster"].tap()
+        XCTAssertTrue(app.buttons["apply-adjustment"].waitForExistence(timeout:10))
+        keepScreenshot(app,"Adjustment-preview-glass")
+        app.buttons["apply-adjustment"].tap()
+        assertMessage(app.staticTexts["adjustment-count"],contains:"1 次")
+        scrollTo(app.buttons["undo-adjustment"],app:app)
+        XCTAssertTrue(app.buttons["undo-adjustment"].isEnabled)
+        keepScreenshot(app,"Adjustment-undo-glass")
+        app.buttons["undo-adjustment"].tap()
+        assertMessage(app.staticTexts["adjustment-count"],contains:"0 次")
+        for _ in 0..<5 { if app.buttons["feedback-faster"].isHittable { break }; app.swipeDown() }
+        app.buttons["feedback-faster"].tap()
+        XCTAssertTrue(app.buttons["apply-adjustment"].waitForExistence(timeout:10)); app.buttons["apply-adjustment"].tap()
+        assertMessage(app.staticTexts["adjustment-count"],contains:"1 次")
+        scrollTo(app.buttons["restore-adjustment"],app:app); app.buttons["restore-adjustment"].tap()
+        XCTAssertTrue(app.buttons["apply-adjustment"].waitForExistence(timeout:10)); app.buttons["apply-adjustment"].tap()
+        XCTAssertTrue(app.buttons["restore-adjustment"].waitForExistence(timeout:5))
+        let restored = XCTNSPredicateExpectation(predicate:NSPredicate(format:"enabled == NO"),object:app.buttons["restore-adjustment"])
+        XCTAssertEqual(XCTWaiter.wait(for:[restored],timeout:10),.completed)
+    }
+    func keepScreenshot(_ app: XCUIApplication,_ name: String) {
+        let shot = XCTAttachment(screenshot:app.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot)
+    }
     func scrollTo(_ element: XCUIElement,app: XCUIApplication) {
         for _ in 0..<8 { if element.isHittable { return }; app.swipeUp() }
     }

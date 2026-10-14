@@ -65,8 +65,8 @@ public enum ExposureSolver {
         let apertures = profile.apertures.filter { range.contains($0) && $0+0.00001 >= needed }
         let shutters = profile.shutters.filter { $0 <= limit+1e-10 }
         guard !apertures.isEmpty, !shutters.isEmpty else {
-            if apertures.isEmpty { result.conflicts.append(String(format:"所需景深 f/%.1f 超出镜头可用光圈",needed)); result.alternatives += ["减少排间距，后退并缩短焦距", "分组拍摄；景深不足调整需显式重新确认"] }
-            if shutters.isEmpty { result.conflicts.append("人物运动所需快门快于机身上限"); result.alternatives.append("等待人物停稳，重新确认运动程度") }
+            if apertures.isEmpty { result.conflicts.append(String(format:"要让前后人物清晰，需要至少 f/%.1f，镜头无法设置到这一档",needed)); result.alternatives += ["减少排间距，后退并缩短焦距", "分组拍摄，重新确认合影距离与排数"] }
+            if shutters.isEmpty { result.conflicts.append("为冻结当前人物动作，需要比机身最快快门更快的速度"); result.alternatives.append("等待人物停稳，再确认运动程度") }
             return result
         }
         var candidates: [(Exposure,Double)] = []
@@ -91,7 +91,9 @@ public enum ExposureSolver {
             result.exposure = best.0; result.errorEV = best.1
         } else if let nearest {
             result.exposure = nearest.0; result.errorEV = nearest.1
-            result.conflicts.append(String(format:"可设置档位仍有 %+.2f EV 曝光误差（正值偏暗），超出 1/3 档求解容差",nearest.1))
+            result.conflicts.append(nearest.1 > 0
+                ? String(format:"光线不足：保留当前快门与景深时，机身可设置的组合仍会偏暗 %.2f 档",nearest.1)
+                : String(format:"现场太亮：机身可设置的组合仍会偏亮 %.2f 档",-nearest.1))
             result.alternatives = nearest.1 > 0 ? ["增加持续光或移到更亮的位置", "人物停稳后显式降低运动程度", "缩短焦距或减少合影纵深，重新求解"] : ["降低现场亮度或使用减光镜", "检查测光是否对应当前取景"]
         }
         return result

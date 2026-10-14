@@ -24,6 +24,10 @@ final class AppModel {
     var recommendations: [Recommendation] = []
     var calibrations: [CalibrationProfile] = []
     var adjustments: [String:CameraAdjustment] = [:]
+    var adjustmentChanges: [String:AdjustmentChange] = [:]
+    var isSolving = false
+    private var adjustmentUndo: [String:[AdjustmentSnapshot]] = [:]
+    private var activeAdjustmentCounts: [String:Int] = [:]
     var suggestion: AISuggestion?
     var aiExplanation: String?
     var aiStatus = ""
@@ -123,6 +127,7 @@ final class AppModel {
         captureTask?.cancel(); solveTask?.cancel(); aiTask?.cancel()
         try RawFileStore.delete(rawURL)
         rawURL = nil; sample = nil; recommendations = []; adjustments = [:]
+        adjustmentUndo = [:]; activeAdjustmentCounts = [:]; adjustmentChanges = [:]; isSolving = false
         confirmed = false; needsReshoot = false; solvedIntent = nil
         suggestion = nil; aiExplanation = nil; aiStatus = ""; aiBusy = false; autoAIRequestedCaptureID = nil
     }
@@ -139,6 +144,7 @@ final class AppModel {
     func changeSubject(_ id: Int) {
         if confirmed && intent.subjectID != id {
             needsReshoot = true; recommendations = []; aiTask?.cancel(); aiRevision = UUID()
+            solveTask?.cancel(); solveRevision = UUID(); isSolving = false
             message = "主体变化，需要点选主体后重拍"
         }
         intent.subjectID = id
@@ -149,6 +155,7 @@ final class AppModel {
         if aiBusy || suggestion != nil { aiStatus = "拍摄条件已更新，可主动重新请求补充建议" }
         aiBusy = false; suggestion = nil
         let revision = UUID(); solveRevision = revision
+        isSolving = true
         let intent = self.intent, adjustments = self.adjustments, calibrations = self.calibrations
         solveTask = Task {
             do {
@@ -161,20 +168,66 @@ final class AppModel {
                     }
                 }.value
                 guard solveRevision == revision, self.sample?.id == sample.id, !Task.isCancelled else { return }
-                recommendations = results; solvedIntent = intent
+                recommendations = results; solvedIntent = intent; isSolving = false
                 try persist(context:context)
                 if aiEnabled && autoAIRequestedCaptureID != sample.id {
                     autoAIRequestedCaptureID = sample.id; requestAI()
                 }
-            } catch { guard solveRevision == revision else { return }; self.error = error.localizedDescription }
+            } catch { guard solveRevision == revision else { return }; isSolving = false; self.error = error.localizedDescription }
         }
     }
-    func adjust(_ camera: LensCamera,compensation: Double? = nil,faster: Bool = false,depth: Bool = false,reset: Bool = false,context: ModelContext) {
-        var a = reset ? CameraAdjustment() : adjustments[camera.rawValue] ?? CameraAdjustment()
-        if let compensation { a.compensation = min(5,max(-5,compensation)) }
-        if faster { a.fasterSteps = min(6,a.fasterSteps+1) }
-        if depth { a.depthSteps = min(6,a.depthSteps+1) }
-        adjustments[camera.rawValue] = a; recompute(context:context)
+    func canUndo(_ camera: LensCamera) -> Bool { !(adjustmentUndo[camera.rawValue] ?? []).isEmpty }
+    func adjustmentCount(_ camera: LensCamera) -> Int { activeAdjustmentCounts[camera.rawValue] ?? 0 }
+
+    func previewAdjustment(_ camera: LensCamera,action: AdjustmentAction) async throws -> AdjustmentPreview {
+        guard let sample, confirmed, !needsReshoot, !isSolving, solvedIntent == intent,
+              let before = recommendations.first(where:{ $0.camera == camera }) else {
+            throw SolverError.invalid("请先按当前拍摄条件计算参数；取景或主体变化时需重拍")
+        }
+        let previous = adjustments[camera.rawValue] ?? CameraAdjustment()
+        let next = try previous.applying(action)
+        guard next != previous else { throw SolverError.invalid("当前已经是初始参数") }
+        let revision = solveRevision, snapshotIntent = intent
+        let calibration = calibrations.filter { $0.camera == camera && abs($0.focalMM-snapshotIntent.focal(for:camera)) < 0.5 }.max { $0.version < $1.version }
+        let after = try await Task.detached(priority:.userInitiated) {
+            try ExposureSolver.solve(sample:sample,intent:snapshotIntent,camera:camera,calibration:calibration,
+                                     compensation:next.compensation,fasterSteps:next.fasterSteps,depthSteps:next.depthSteps)
+        }.value
+        guard !Task.isCancelled, self.sample?.id == sample.id, solveRevision == revision,
+              self.intent == snapshotIntent, !needsReshoot else {
+            throw SolverError.invalid("现场条件已变化，本次调整预览已失效")
+        }
+        return AdjustmentPreview(captureID:sample.id,revision:revision,intent:snapshotIntent,camera:camera,
+                                 action:action,previous:previous,next:next,before:before,after:after)
+    }
+
+    func applyAdjustment(_ preview: AdjustmentPreview,context: ModelContext) throws {
+        guard sample?.id == preview.captureID, confirmed, !needsReshoot, !isSolving,
+              intent == preview.intent, solvedIntent == intent, solveRevision == preview.revision,
+              (adjustments[preview.camera.rawValue] ?? CameraAdjustment()) == preview.previous else {
+            throw SolverError.invalid("参数或拍摄条件已更新，请重新预览调整")
+        }
+        guard preview.after.isFeasible || preview.action == .restore else {
+            throw SolverError.invalid("这次调整无法满足曝光与清晰要求，请修改现场条件")
+        }
+        adjustmentUndo[preview.camera.rawValue,default:[]].append(AdjustmentSnapshot(adjustment:preview.previous,
+            count:adjustmentCount(preview.camera),change:adjustmentChanges[preview.camera.rawValue]))
+        activeAdjustmentCounts[preview.camera.rawValue] = preview.action == .restore ? 0 : adjustmentCount(preview.camera)+1
+        adjustments[preview.camera.rawValue] = preview.next
+        adjustmentChanges[preview.camera.rawValue] = AdjustmentChange(title:preview.action.title,
+                                                                    before:preview.before.exposure,after:preview.after.exposure)
+        recompute(context:context)
+    }
+
+    func undoAdjustment(_ camera: LensCamera,context: ModelContext) throws {
+        guard confirmed, !needsReshoot, !isSolving, solvedIntent == intent else {
+            throw SolverError.invalid("请先按当前拍摄条件重新计算，再撤销试拍调整")
+        }
+        guard let previous = adjustmentUndo[camera.rawValue]?.popLast() else { return }
+        adjustments[camera.rawValue] = previous.adjustment
+        activeAdjustmentCounts[camera.rawValue] = previous.count
+        adjustmentChanges[camera.rawValue] = previous.change
+        recompute(context:context)
     }
     func savedResult() -> SavedResult? {
         guard let sample, !recommendations.isEmpty else { return nil }
