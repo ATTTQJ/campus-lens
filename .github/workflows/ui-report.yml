@@ -8,7 +8,7 @@ permissions:
   actions: read
 jobs:
   export:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
+    if: (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: macos-26
     timeout-minutes: 10
     steps:
@@ -22,9 +22,14 @@ jobs:
       - name: Export original XCTest attachments and test summary
         run: |
           sudo xcode-select --switch /Applications/Xcode_26.6.app/Contents/Developer
-          xcrun xcresulttool export attachments --path incoming/iOS-tests.xcresult --output-path screenshots
-          xcrun xcresulttool get test-results summary --path incoming/iOS-tests.xcresult > screenshots/test-summary.json
-          cp incoming/version.json screenshots/build-version.json
+          mkdir -p screenshots
+          if [[ -d incoming/iOS-tests.xcresult ]]; then
+            xcrun xcresulttool export attachments --path incoming/iOS-tests.xcresult --output-path screenshots
+            xcrun xcresulttool get test-results summary --path incoming/iOS-tests.xcresult > screenshots/test-summary.json
+          else
+            printf '%s\n' 'Build stopped before XCTest created a result bundle.' > screenshots/no-test-result.txt
+          fi
+          if [[ -f incoming/version.json ]]; then cp incoming/version.json screenshots/build-version.json; fi
           cp incoming/commit.txt screenshots/commit.txt
       - name: Upload original UI screenshots and provenance
         uses: actions/upload-artifact@v4

@@ -139,10 +139,20 @@ final class CampusLensUITests: XCTestCase {
             return row.exists && frame.width > 100 && frame.height > 20 && settings.frame.contains(CGPoint(x:frame.midX,y:frame.midY))
         },object:row)
         XCTAssertEqual(XCTWaiter.wait(for:[visible],timeout:10),.completed)
-        if toggle.value as? String == "0" {
-            row.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.5)).tap()
+        // Settings may publish the row before its switch value is available on
+        // a cold boot. Wait for a known value and only tap a verified off state.
+        for _ in 0..<2 {
+            let known = XCTNSPredicateExpectation(predicate:NSPredicate(format:"value IN {'0','1'}"),object:toggle)
+            guard XCTWaiter.wait(for:[known],timeout:15) == .completed else {
+                XCTFail("Settings did not expose a stable value for \(name)"); return
+            }
+            if toggle.value as? String == "1" { return }
+            guard toggle.value as? String == "0" else { continue }
+            if toggle.isHittable && toggle.frame.width > 20 { toggle.tap() }
+            else { row.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.5)).tap() }
+            let enabled = XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == '1'"),object:toggle)
+            if XCTWaiter.wait(for:[enabled],timeout:15) == .completed { return }
         }
-        let enabled = XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == '1'"),object:toggle)
-        XCTAssertEqual(XCTWaiter.wait(for:[enabled],timeout:5),.completed)
+        XCTAssertEqual(toggle.value as? String,"1","Failed to enable \(name) in actual simulator Settings")
     }
 }
