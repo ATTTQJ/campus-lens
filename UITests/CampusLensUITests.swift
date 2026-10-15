@@ -70,6 +70,12 @@ final class CampusLensUITests: XCTestCase {
         XCTAssertTrue(app.buttons["confirm"].waitForExistence(timeout:10))
         scrollTo(app.buttons["confirm"],app:app); app.buttons["confirm"].tap()
         XCTAssertTrue(app.otherElements["parameters-nikon"].waitForExistence(timeout:10))
+        let resultHeader = app.otherElements["result-header"]
+        XCTAssertTrue(resultHeader.waitForExistence(timeout:5))
+        let landedAtTop = XCTNSPredicateExpectation(predicate:NSPredicate { _,_ in
+            resultHeader.isHittable && resultHeader.frame.minY < app.frame.height*0.3
+        },object:resultHeader)
+        XCTAssertEqual(XCTWaiter.wait(for:[landedAtTop],timeout:5),.completed)
         XCTAssertFalse(app.otherElements["subject-regions"].exists)
         for _ in 0..<5 { if app.buttons["adjust-nikon"].isHittable { break }; app.swipeDown() }
         scrollTo(app.buttons["adjust-nikon"],app:app); keepScreenshot(app,"Results-glass")

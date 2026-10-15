@@ -26,12 +26,14 @@ struct ResultView: View {
     @State private var adjusting: LensCamera?
     @State private var showConditions = false
     @State private var showSubjects = false
+    @State private var landedCaptureID: UUID?
     var body: some View {
         @Bindable var model = model
-        ScrollView {
+        ScrollViewReader { proxy in
+          ScrollView {
             VStack(spacing:16) {
                 if let sample = model.sample {
-                    if model.confirmed { resultHeader(sample) }
+                    if model.confirmed { resultHeader(sample).id("result-top") }
                     else {
                         GlassPanel("确认测光关注区域") {
                             SubjectImage(sample:sample,selectedID:model.intent.subjectID,showRegions:true) { model.changeSubject($0) }
@@ -55,6 +57,12 @@ struct ResultView: View {
                     diagnostics(sample)
                 } else { ContentUnavailableView("还没有当前测光",systemImage:"camera",description:Text("先拍摄 RAW，再确认现场条件。")) }
             }.padding(16)
+          }
+          .onChange(of:model.recommendations.isEmpty) { _,empty in
+              guard !empty, let id = model.sample?.id, landedCaptureID != id else { return }
+              landedCaptureID = id
+              proxy.scrollTo("result-top",anchor:.top)
+          }
         }.background(GlassBackdrop(jpeg:model.sample?.previewJPEG))
         .navigationTitle("本次参数").navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -116,7 +124,7 @@ struct ResultView: View {
                     Text("主体："+(sample.subjects.first { $0.id == model.intent.subjectID }?.label ?? "关注区域")).font(.caption)
                 }
             }
-        }
+        }.accessibilityElement(children:.contain).accessibilityIdentifier("result-header")
     }
     private var aiSection: some View {
         GlassPanel {
