@@ -154,8 +154,10 @@ final class CampusLensUITests: XCTestCase {
             }
             if toggle.value as? String == "1" { return }
             guard toggle.value as? String == "0" else { continue }
-            if toggle.isHittable && toggle.frame.width > 20 { toggle.tap() }
-            else { row.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.5)).tap() }
+            // Settings may report a hittable switch whose AX activation point
+            // does not toggle the underlying control. Its visible table row
+            // is reliable on both supported runtimes; tap the trailing switch.
+            row.coordinate(withNormalizedOffset:CGVector(dx:0.9,dy:0.5)).tap()
             let enabled = XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == '1'"),object:toggle)
             if XCTWaiter.wait(for:[enabled],timeout:15) == .completed { return }
         }
