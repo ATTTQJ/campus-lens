@@ -33,9 +33,12 @@ targets = []
 products = []
 target_ids = {name: ident("target-"+name) for name in ["CampusLens","CampusLensTests","CampusLensUITests"]}
 for name, source_paths, product_type in [
-    ("CampusLens", sorted((ROOT/"App").glob("*.swift")), "com.apple.product-type.application"),
-    ("CampusLensTests", sorted((ROOT/"Tests/CampusLensCoreTests").glob("*.swift")) + sorted((ROOT/"AppTests").glob("*.swift")), "com.apple.product-type.bundle.unit-test"),
-    ("CampusLensUITests", sorted((ROOT/"UITests").glob("*.swift")), "com.apple.product-type.bundle.ui-testing")
+    # Path comparison is case-insensitive on Windows but case-sensitive on macOS.
+    # Compare explicit strings so names such as AIClient and AdjustmentSheet
+    # generate the same project ordering on both hosts.
+    ("CampusLens", sorted((ROOT/"App").glob("*.swift"),key=lambda p:p.name), "com.apple.product-type.application"),
+    ("CampusLensTests", sorted((ROOT/"Tests/CampusLensCoreTests").glob("*.swift"),key=lambda p:p.name) + sorted((ROOT/"AppTests").glob("*.swift"),key=lambda p:p.name), "com.apple.product-type.bundle.unit-test"),
+    ("CampusLensUITests", sorted((ROOT/"UITests").glob("*.swift"),key=lambda p:p.name), "com.apple.product-type.bundle.ui-testing")
 ]:
     file_ids = []
     build_ids = []
