@@ -7,7 +7,7 @@
 
 目标手机是 iPhone 16 Pro 后置物理主摄，1×取景；最低 iOS 26。首版实现会议课堂、颁奖抓拍、多排合影，离线计算、灰卡校准、试拍调整、100 条本机历史和可选视觉 AI。没有相机遥控、照片自动传输、修图、账号或 TestFlight。拍摄不依赖任何其他摄影软件。
 
-**当前交付状态：液态玻璃新版 0.2.0（build 12）已生成未签名设备 IPA。** 代码提交 `f19e9c4` 已通过 [iOS 26 主构建](https://github.com/ATTTQJ/campus-lens/actions/runs/38694640099)：32 项单元／图像／网络／回退测试与 5 项 UI 测试通过；纯 Swift 包另有 11 项测试通过。[同一提交的 iOS 27 兼容验证](https://github.com/ATTTQJ/campus-lens/actions/runs/38694639992)仍待完成。手机 Bayer RAW、灰卡校准、两台相机实际效果和外部视觉服务仍待实测，结果均为“起始参数”。
+**当前交付状态：液态玻璃新版 0.2.0（build 12）已生成未签名设备 IPA。** 同一代码提交 `f19e9c4` 已通过 [iOS 26 主构建](https://github.com/ATTTQJ/campus-lens/actions/runs/38694640099)和 [iOS 27 兼容验证](https://github.com/ATTTQJ/campus-lens/actions/runs/38694639992)：每套系统的 32 项单元／图像／网络／回退测试与 5 项 UI 测试全部通过；纯 Swift 包另有 11 项测试通过。手机 Bayer RAW、灰卡校准、两台相机实际效果和外部视觉服务仍待实测，结果均为“起始参数”。
 
 在 [已验证构建产物](https://github.com/ATTTQJ/campus-lens/actions/runs/38694640099/artifacts/11954390037)下载 ZIP，解压获得 `CampusLens-unsigned.ipa`。产物保留至 2026-10-22；[原生 UI 截图与测试摘要](https://github.com/ATTTQJ/campus-lens/actions/runs/38696197706/artifacts/11954390114)单独提供。完整状态见 [验证记录](docs/VALIDATION.md)，源码位于 [公开仓库](https://github.com/ATTTQJ/campus-lens)。
 
