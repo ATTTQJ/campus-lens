@@ -10,6 +10,7 @@ enum CaptureLayout {
 
 struct CaptureView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var context
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var focus: UnitRect?
     @State private var showConditions = false
@@ -38,7 +39,7 @@ struct CaptureView: View {
         }
         .toolbar(.hidden,for:.navigationBar)
         .sheet(isPresented:$showConditions) {
-            NavigationStack { ConditionsSheet(intent:model.intent) { model.intent = $0 } }
+            NavigationStack { ConditionsSheet(intent:model.intent) { model.intent = $0; model.recompute(context:context) } }
                 .presentationBackground(.clear).presentationDragIndicator(.visible)
         }
     }
@@ -67,7 +68,7 @@ struct CaptureView: View {
                         .allowsHitTesting(false).accessibilityHidden(true)
                 }
             }.clipped()
-        }.accessibilityIdentifier("capture-viewfinder")
+        }.accessibilityElement(children:.contain).accessibilityIdentifier("capture-viewfinder")
     }
     private var captureControls: some View {
         @Bindable var model = model

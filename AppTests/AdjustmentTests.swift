@@ -117,4 +117,20 @@ final class AdjustmentTests: XCTestCase {
         XCTAssertTrue(model.needsReshoot); XCTAssertTrue(model.recommendations.isEmpty); XCTAssertFalse(model.isSolving)
         XCTAssertThrowsError(try model.applyAdjustment(preview,context:container.mainContext))
     }
+    func testConditionsChangedDuringSolveCannotMislabelHistory() async throws {
+        let model = AppModel()
+        let container = try ModelContainer(for:HistoryRecord.self,configurations:ModelConfiguration(isStoredInMemoryOnly:true))
+        model.sample = Fixture.sample(id:UUID())
+        model.confirm(context:container.mainContext)
+        model.intent.nikonFocal = 70
+        for _ in 0..<200 {
+            if !model.isSolving { break }
+            try await Task.sleep(for:.milliseconds(20))
+        }
+        XCTAssertFalse(model.isSolving); XCTAssertTrue(model.recommendations.isEmpty)
+        XCTAssertEqual(try container.mainContext.fetchCount(FetchDescriptor<HistoryRecord>()),0)
+        model.recompute(context:container.mainContext); try await settled(model)
+        let saved = try container.mainContext.fetch(FetchDescriptor<HistoryRecord>())[0].decoded()
+        XCTAssertEqual(saved.intent.nikonFocal,70)
+    }
 }

@@ -168,6 +168,7 @@ final class AppModel {
                     }
                 }.value
                 guard solveRevision == revision, self.sample?.id == sample.id, !Task.isCancelled else { return }
+                guard self.intent == intent else { isSolving = false; return }
                 recommendations = results; solvedIntent = intent; isSolving = false
                 try persist(context:context)
                 if aiEnabled && autoAIRequestedCaptureID != sample.id {
@@ -231,7 +232,7 @@ final class AppModel {
     }
     func savedResult() -> SavedResult? {
         guard let sample, !recommendations.isEmpty else { return nil }
-        return SavedResult(sample:sample,intent:intent,recommendations:recommendations,adjustments:adjustments,
+        return SavedResult(sample:sample,intent:solvedIntent ?? intent,recommendations:recommendations,adjustments:adjustments,
                            calibrations:calibrations.filter { c in recommendations.contains { $0.camera == c.camera && $0.calibrationVersion == c.version } },aiExplanation:aiExplanation)
     }
     func persist(context: ModelContext) throws {

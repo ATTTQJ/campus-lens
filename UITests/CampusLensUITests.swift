@@ -62,10 +62,9 @@ final class CampusLensUITests: XCTestCase {
         app.buttons["prepare"].tap()
         XCTAssertTrue(app.buttons["shoot"].waitForExistence(timeout:5))
         let finder = app.otherElements["capture-viewfinder"]
-        if finder.exists {
-            XCTAssertEqual(finder.frame.width/finder.frame.height,0.75,accuracy:0.01)
-            XCTAssertGreaterThanOrEqual(app.buttons["shoot"].frame.minY,finder.frame.maxY)
-        }
+        XCTAssertTrue(finder.waitForExistence(timeout:5))
+        XCTAssertEqual(finder.frame.width/finder.frame.height,0.75,accuracy:0.01)
+        XCTAssertGreaterThanOrEqual(app.buttons["shoot"].frame.minY,finder.frame.maxY)
         keepScreenshot(app,"Capture-glass")
         app.buttons["shoot"].tap()
         XCTAssertTrue(app.buttons["confirm"].waitForExistence(timeout:10))
