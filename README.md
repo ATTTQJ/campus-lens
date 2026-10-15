@@ -7,9 +7,9 @@
 
 目标手机是 iPhone 16 Pro 后置物理主摄，1×取景；最低 iOS 26。首版实现会议课堂、颁奖抓拍、多排合影，离线计算、灰卡校准、试拍调整、100 条本机历史和可选视觉 AI。没有相机遥控、照片自动传输、修图、账号或 TestFlight。拍摄不依赖任何其他摄影软件。
 
-**当前交付状态：首个完整测试版 0.1.0（build 6）已生成未签名设备 IPA。** 同一源码提交 `4039e2d` 已通过 [iOS 26 主构建](https://github.com/ATTTQJ/campus-lens/actions/runs/38569117473)和 [iOS 27 兼容验证](https://github.com/ATTTQJ/campus-lens/actions/runs/38569117504)：两套系统各 22 项单元／图像／网络测试与 4 项 UI 测试通过；纯 Swift 包另有 11 项测试通过。手机 Bayer RAW、灰卡校准、两台相机实际效果和外部视觉服务仍待实测，结果均为“起始参数”。
+**当前交付状态：液态玻璃新版 0.2.0（build 12）已生成未签名设备 IPA。** 代码提交 `f19e9c4` 已通过 [iOS 26 主构建](https://github.com/ATTTQJ/campus-lens/actions/runs/38694640099)：32 项单元／图像／网络／回退测试与 5 项 UI 测试通过；纯 Swift 包另有 11 项测试通过。[同一提交的 iOS 27 兼容验证](https://github.com/ATTTQJ/campus-lens/actions/runs/38694639992)仍待完成。手机 Bayer RAW、灰卡校准、两台相机实际效果和外部视觉服务仍待实测，结果均为“起始参数”。
 
-在 [已验证构建产物](https://github.com/ATTTQJ/campus-lens/actions/runs/38569117473/artifacts/11898460697)下载 ZIP，解压获得 `CampusLens-unsigned.ipa`。产物七天有效；完整状态见 [验证记录](docs/VALIDATION.md)。源码位于 [公开仓库](https://github.com/ATTTQJ/campus-lens)。
+在 [已验证构建产物](https://github.com/ATTTQJ/campus-lens/actions/runs/38694640099/artifacts/11954390037)下载 ZIP，解压获得 `CampusLens-unsigned.ipa`。产物保留至 2026-10-22；[原生 UI 截图与测试摘要](https://github.com/ATTTQJ/campus-lens/actions/runs/38696197706/artifacts/11954390114)单独提供。完整状态见 [验证记录](docs/VALIDATION.md)，源码位于 [公开仓库](https://github.com/ATTTQJ/campus-lens)。
 
 ## 使用流程
 
@@ -17,14 +17,14 @@
 2. 点选取景中的重要主体，等待曝光和对焦稳定，点击“拍摄并分析”。同一次请求捕获 RAW 和 JPEG，按 AVFoundation `uniqueID` 配对。曝光数据来自本次 RAW 的 EXIF，缺失时失败，不使用取景时的实时参数代替。
 3. 确认场景、运动、手持状态、两个实际焦距和主要主体。合影可填写最近和最远人物距离。缺少距离时采用保守预设并提醒检查景深。
 4. 两张相机卡片显示光圈、快门、ISO。相机使用 M 档、关闭自动 ISO，曝光步长设置为 1/3 档；200D 静态手动 ISO 使用整档。先试拍，检查曝光、人物运动和前后排清晰度。
-5. 每台相机独立调整曝光补偿、“人物模糊”或“景深不足”。算法重新枚举档位，不悄悄改变运动约束。无解时标明冲突，显示最接近的组合和显式调整建议。
+5. 每台相机独立调整曝光补偿、“人物模糊”或“景深不足”，先预览新旧参数，确认后应用；可“撤销上一步”或“恢复初始”。算法重新枚举档位，不悄悄改变运动要求。无法满足条件时给出具体现场说明与备选调整；高 ISO 会说明快门、光圈与噪点的取舍。
 6. 只有焦距／场景变化且取景、主体、光线没变时，才可复用本次测光。更换主体会使推荐失效并要求重拍；换取景或灯光也必须重拍。
 
 所有结果称为“起始参数”。没有匹配设备校准时显示“起始参数 · 未校准”，设备修正为零。校准按机身、镜头、焦距和算法版本匹配；焦距不匹配时不会静默使用其他焦段的修正。
 
 ## 工程与算法
 
-Swift 6、SwiftUI、AVFoundation、Vision、ImageIO、SwiftData、Keychain；原生 `CampusLens.xcodeproj`，共享 `CampusLens` Scheme，无第三方 iOS 依赖。导航和控件使用系统 Liquid Glass；参数卡片使用稳定背景、等宽数字和动态字体。
+Swift 6、SwiftUI、AVFoundation、Vision、ImageIO、SwiftData、Keychain；原生 `CampusLens.xcodeproj`，共享 `CampusLens` Scheme，无第三方 iOS 依赖。导航、控件、参数卡片、历史和设置容器使用原生 Liquid Glass，参数使用等宽数字与动态字体；降低透明度时采用不透明背景。取景为完整竖向 3:4，主控件放在画幅外。界面与回退细节见 [0.2 设计实现](docs/UI-0.2.md)。
 
 目录：
 
