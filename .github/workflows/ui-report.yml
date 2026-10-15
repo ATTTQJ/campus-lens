@@ -1,0 +1,35 @@
+name: Export native UI screenshots
+on:
+  workflow_run:
+    workflows: ['iOS 26 main build']
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  export:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - name: Download verified main-build report
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: CampusLens-iOS26-${{ github.event.workflow_run.run_number }}
+          path: incoming
+      - name: Export original XCTest attachments and test summary
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.6.app/Contents/Developer
+          xcrun xcresulttool export attachments --path incoming/iOS-tests.xcresult --output-path screenshots
+          xcrun xcresulttool get test-results summary --path incoming/iOS-tests.xcresult > screenshots/test-summary.json
+          cp incoming/version.json screenshots/build-version.json
+          cp incoming/commit.txt screenshots/commit.txt
+      - name: Upload original UI screenshots and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: CampusLens-UI-${{ github.event.workflow_run.run_number }}
+          path: screenshots/
+          retention-days: 7
+          if-no-files-found: error
